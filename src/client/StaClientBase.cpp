@@ -87,6 +87,7 @@ bool StaClientBase::getPinCriticality(
 						bool inMin,
 						bool inEdgeSourcePriority) const {
 	if(!mHasGraph || !mHasGraphTiming) {
+		//std::cout << "no graph and timing for criticality" << std::endl;
 		outValue = 0;
 		return false;
 	}
@@ -115,6 +116,7 @@ bool StaClientBase::getPinCriticality(
 
 	//out 0, return false if pin wasn't registered
 	if(!hasData) {
+		//std::cout << "pin wasn't registered" << std::endl;
 		outValue = 0;
 		return false;
 	}
@@ -122,15 +124,39 @@ bool StaClientBase::getPinCriticality(
 	//node index must be within bounds
 	if((inMin && nodeIt->second >= mNodeMinCritFactorsVec.size()) ||
 			(!inMin && nodeIt->second >= mNodeMaxCritFactorsVec.size())) {
+		//std::cout << "node index must be within bounds" << std::endl;
 		outValue = 0;
 		return false;
 	}
 
 	if(inMin)
-		return mNodeMinCritFactorsVec[nodeIt->second];
+		outValue = mNodeMinCritFactorsVec[nodeIt->second];
+	else
+		outValue = mNodeMaxCritFactorsVec[nodeIt->second];
 
-	return mNodeMaxCritFactorsVec[nodeIt->second];
+	return true;
 }
+
+/**
+ * Returns beginning iterator of name-pin map.
+ * @return beginning name-pin iterator
+ */
+StaClientBase::StrToPinMap::const_iterator
+StaClientBase::beginPathPins() const {
+	//std::cout << "Path->pin mapping has " << mPathToPinUMap.size() << "entries" << std::endl;
+
+	return mPathToPinUMap.begin();
+}
+
+/**
+ * Returns ending iterator of name-pin map.
+ * @return ending name-pin iterator
+ */
+StaClientBase::StrToPinMap::const_iterator
+StaClientBase::endPathPins() const {
+	return mPathToPinUMap.end();
+}
+
 
 
 /**
@@ -1143,6 +1169,7 @@ bool StaClientBase::loadNetlistSlacks() {
 //				<< std::endl;
 //	}
 
+
 	//must be virtual to modify it in subclasses
 	if(mHasGraphTiming) {
 		mHasGraphTiming =
@@ -1513,6 +1540,7 @@ bool StaClientBase::reportTiming(
  * Clears all internal mappings of graph IDs and timings.
  */
 void StaClientBase::clearGraphMapping() {
+	//std::cout << "Clearing graph mapping" << std::endl;
 	mPathToPinUMap.clear();
 	mSourcePinToVertexIdUMap.clear();
 	mSinkPinToVertexIdUMap.clear();
@@ -1767,6 +1795,8 @@ bool StaClientBase::addBlockPinsInNameMap(
 						std::map<std::string, GenericPin*>& outPathToPinMap) {
 	if(!inBlockPtr)
 		return false;
+
+	//std::cout << "Filling pin paths mapping" << std::endl;
 
 	bool allOk = true;
 

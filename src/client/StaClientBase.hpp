@@ -29,7 +29,8 @@ class StaClientBase:
 	typedef std::unordered_multimap<
 				PinsPair, uint32_t, boost::hash<PinsPair>>
 			PinsPairToEdgeIdUMMap;
-
+	typedef std::map<std::string, GenericPin*>
+			StrToPinMap;
 
 	/** protocol to interchange messages and get results */
 	StaClientIpcProtocol mProtocol;
@@ -90,6 +91,10 @@ public:
 			float& outValue,
 			bool inMin,
 			bool inEdgeSourcePriority = true) const;
+
+	StrToPinMap::const_iterator beginPathPins() const;
+	StrToPinMap::const_iterator endPathPins() const;
+
 
 public:
 
