@@ -137,6 +137,46 @@ bool StaClientBase::getPinCriticality(
 	return true;
 }
 
+bool StaClientBase::getPinTimingData(
+		const GenericPin* inPinPtr,
+		NodeTimingData& outValue) const {
+		if(!mHasGraph || !mHasGraphTiming) {
+		//std::cout << "no graph and timing for criticality" << std::endl;
+		return false;
+	}
+
+	auto nodeIt = mSinkPinToVertexIdUMap.begin();
+	bool hasData = false;
+
+	//don't want to juggle pointers here
+	nodeIt = mSourcePinToVertexIdUMap.find(inPinPtr);
+	hasData = nodeIt != mSourcePinToVertexIdUMap.end();
+
+	if(!hasData) {
+		nodeIt = mSinkPinToVertexIdUMap.find(inPinPtr);
+		hasData = nodeIt != mSinkPinToVertexIdUMap.end();
+	}
+
+	//out 0, return false if pin wasn't registered
+	if(!hasData) {
+		//std::cout << "pin wasn't registered" << std::endl;
+		return false;
+	}
+
+	//node index must be within bounds
+	if(nodeIt->second >= mNodeTimingDataVec.size()) {
+		//std::cout << "node index must be within bounds" << std::endl;
+		return false;
+	}
+
+	outValue = mNodeTimingDataVec[nodeIt->second];
+
+	return true;
+}
+
+
+
+
 /**
  * Returns beginning iterator of name-pin map.
  * @return beginning name-pin iterator

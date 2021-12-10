@@ -91,11 +91,16 @@ public:
 			float& outValue,
 			bool inMin,
 			bool inEdgeSourcePriority = true) const;
+			
+	bool getPinTimingData(
+			const GenericPin* inPinPtr,
+			NodeTimingData& outValue) const;
 
 	StrToPinMap::const_iterator beginPathPins() const;
 	StrToPinMap::const_iterator endPathPins() const;
 
 
+			
 public:
 
 	virtual bool exit();
