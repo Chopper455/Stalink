@@ -1752,11 +1752,13 @@ bool StaClientBase::fillPinToVertexIdMaps(
 		if(inVertexIdToDataVec[dataIdx].mIsDriver) {
 //			std::cout << "source mapping vertex idx of pin '" << pinName
 //					<< "' -> " << inVertexIdToDataVec[dataIdx].mVertexId << std::endl;
-			mDriverPinToVertexIdUMap.emplace(pinPtr, inVertexIdToDataVec[dataIdx].mVertexId);
+			//mDriverPinToVertexIdUMap.emplace(pinPtr, inVertexIdToDataVec[dataIdx].mVertexId);
+			mDriverPinToVertexIdUMap.emplace(pinPtr, dataIdx);
 		} else {
 //			std::cout << "sink mapping vertex idx of pin '" << pinName
 //					<< "' -> " << inVertexIdToDataVec[dataIdx].mVertexId << std::endl;
-			mSinkPinToVertexIdUMap.emplace(pinPtr, inVertexIdToDataVec[dataIdx].mVertexId);
+			//mSinkPinToVertexIdUMap.emplace(pinPtr, inVertexIdToDataVec[dataIdx].mVertexId);
+			mSinkPinToVertexIdUMap.emplace(pinPtr, dataIdx);
 		}
 	}
 
