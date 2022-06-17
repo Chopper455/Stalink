@@ -140,7 +140,7 @@ bool StaClientBase::getPinCriticality(
 bool StaClientBase::getPinTimingData(
 		const GenericPin* inPinPtr,
 		NodeTimingData& outValue) const {
-		if(!mHasGraph || !mHasGraphTiming) {
+	if(!mHasGraph || !mHasGraphTiming) {
 		//std::cout << "no graph and timing for criticality" << std::endl;
 		return false;
 	}
@@ -1212,11 +1212,21 @@ bool StaClientBase::loadNetlistSlacks() {
 
 	//must be virtual to modify it in subclasses
 	if(mHasGraphTiming) {
+		std::vector<float> clockMinWorstRatVec;
+		std::vector<float> clockMaxWorstRatVec;
+		std::vector<float> clockMinWorstSlackVec;
+		std::vector<float> clockMaxWorstSlackVec;
+
 		mHasGraphTiming =
+			collectClockShifts(mNodeTimingDataVec,
+					clockMinWorstRatVec, clockMaxWorstRatVec,
+					clockMinWorstSlackVec, clockMaxWorstSlackVec) &&
 			calcNodeCritFactors(
-				mNodeTimingDataVec, mNodeMinCritFactorsVec, true) &&
+				mNodeTimingDataVec, mNodeMinCritFactorsVec,
+				clockMinWorstRatVec, clockMinWorstSlackVec, true) &&
 			calcNodeCritFactors(
-				mNodeTimingDataVec, mNodeMaxCritFactorsVec, false);
+				mNodeTimingDataVec, mNodeMaxCritFactorsVec,
+				clockMaxWorstRatVec, clockMaxWorstSlackVec, false);
 		return mHasGraphTiming;
 	}
 
@@ -1272,7 +1282,64 @@ float StaClientBase::getNodeDataSlack(
 }
 
 
+/**
+ * Fills worst min/max RATs and slacks for clocks mentioned in node timings.
+ * Resizes output vectors depending on clock index.
+ * @param inNodeTimingData nodes timing data
+ * @param outClockMinWorstRatVec worst min RATs for clocks
+ * @param outClockMaxWorstRatVec worst max RATs for clocks
+ * @param outClockMaxWorstRatVec worst min slacks for clocks
+ * @param outClockMaxWorstRatVec worst max slacks for clocks
+ * @return success flag
+ */
+bool StaClientBase::collectClockShifts(
+						const std::vector<NodeTimingData>& inNodeTimingData,
+						std::vector<float>& outClockMinWorstRatVec,
+						std::vector<float>& outClockMaxWorstRatVec,
+						std::vector<float>& outClockMinWorstSlackVec,
+						std::vector<float>& outClockMaxWorstSlackVec) {
+	outClockMinWorstRatVec.clear();
+	outClockMaxWorstRatVec.clear();
+	outClockMinWorstSlackVec.clear();
+	outClockMaxWorstSlackVec.clear();
 
+	float minSlack = 0;
+	float maxSlack = 0;
+	float minRat = 0;
+	float maxRat = 0;
+
+	for(const NodeTimingData& data : inNodeTimingData) {
+		if(!data.mHasTiming || data.mClkIdx < 0)
+			continue;
+
+		if(data.mNonData)
+			continue;
+
+		if(data.mClkIdx >= outClockMinWorstRatVec.size()) {
+			outClockMinWorstRatVec.resize(data.mClkIdx+1, 0);
+			outClockMaxWorstRatVec.resize(data.mClkIdx+1, 0);
+			outClockMinWorstSlackVec.resize(data.mClkIdx+1, 0);
+			outClockMaxWorstSlackVec.resize(data.mClkIdx+1, 0);
+		}
+
+		minSlack = getNodeDataSlack(data, true);
+		maxSlack = getNodeDataSlack(data, false);
+		minRat = data.mMinWorstSlackAat;
+		maxRat = data.mMaxWorstSlackRat;
+
+		if(minSlack < outClockMinWorstSlackVec[data.mClkIdx])
+			outClockMinWorstSlackVec[data.mClkIdx] = minSlack;
+		if(maxSlack < outClockMaxWorstSlackVec[data.mClkIdx])
+			outClockMaxWorstSlackVec[data.mClkIdx] = maxSlack;
+
+		if(minRat > outClockMinWorstRatVec[data.mClkIdx])
+			outClockMinWorstRatVec[data.mClkIdx] = minRat;
+		if(maxRat > outClockMaxWorstRatVec[data.mClkIdx])
+			outClockMaxWorstRatVec[data.mClkIdx] = maxRat;
+	}
+
+	return true;
+}
 
 
 /**
@@ -1280,12 +1347,16 @@ float StaClientBase::getNodeDataSlack(
  * Skips nodes that lack constrained path endpoints (i.e. unconstrained directly).
  * @param inNodeTimingData nodes timing data
  * @param outNodeCritFactorsVec nodes criticalness factors to set
+ * @param inWorstRatPerClockVec worst RATs for clocks
+ * @param inWorstSlackPerClockVec worst slacks for clocks
  * @param inMinConstraint min-constraint flag
  * @return success flag
  */
 bool StaClientBase::calcNodeCritFactors(
 						const std::vector<NodeTimingData>& inNodeTimingData,
 						std::vector<float>& outNodeCritFactorsVec,
+						const std::vector<float>& inWorstRatPerClockVec,
+						const std::vector<float>& inWorstSlackPerClockVec,
 						bool inMinConstraint) {
 //	float undefEndpointMinSlack = std::numeric_limits<float>::max();
 //	float undefEndpointMaxSlack = std::numeric_limits<float>::lowest();
@@ -1296,81 +1367,78 @@ bool StaClientBase::calcNodeCritFactors(
 	std::vector<float> endpointDividerVec;
 
 	float nodeSlack = 0;
+	float worstRat = 0;
+	float worstSlack = 0;
+	float criticality = 0;
+	int clkIdx = 0;
 
-	//process timing data of all nodes to find slack intervals and RAT dividers of endpoints
-
-	for(const NodeTimingData& data : inNodeTimingData) {
-		if(!data.mHasTiming)
-			continue;
-
-		nodeSlack = getNodeDataSlack(data, inMinConstraint);
-//		//checking if it has endpoint, setting in appropriate place
-//		if(data.mEndPointIdx >= inNodeTimingData.size()) {
-//			if(nodeSlack > undefEndpointMaxSlack)
-//				undefEndpointMaxSlack = nodeSlack;
-//			if(nodeSlack < undefEndpointMinSlack)
-//				undefEndpointMinSlack = nodeSlack;
-//			if(inMinConstraint && data.mHasEndMinPathRat &&
-//					data.mMinPathRat > undefEndpointDivider)
-//				undefEndpointDivider = data.mMinPathRat;
-//			if(!inMinConstraint && data.mHasEndMaxPathRat &&
-//					data.mMaxPathRat > undefEndpointDivider)
-//				undefEndpointDivider = data.mMaxPathRat;
-//		}
-
-		//NOTE: ignoring now unconstrained nodes and keeping their critical factor as 0
-		if(data.mEndPointIdx >= inNodeTimingData.size())
-			continue;
-
-		//adding new entries in endpoint index is out of bounds
-		if(data.mEndPointIdx >= endpointMinSlackVec.size()) {
-			endpointMinSlackVec.resize(
-					data.mEndPointIdx + 1,
-					std::numeric_limits<float>::max());
-			endpointMaxSlackVec.resize(
-					data.mEndPointIdx + 1,
-					std::numeric_limits<float>::lowest());
-			endpointDividerVec.resize(
-					data.mEndPointIdx + 1,
-					std::numeric_limits<float>::lowest());
-		}
-
-		if(nodeSlack > endpointMaxSlackVec[data.mEndPointIdx])
-			endpointMaxSlackVec[data.mEndPointIdx] = nodeSlack;
-		if(nodeSlack < endpointMinSlackVec[data.mEndPointIdx])
-			endpointMinSlackVec[data.mEndPointIdx] = nodeSlack;
-		if(inMinConstraint && data.mHasEndMinPathRat &&
-				data.mMinPathRat > endpointDividerVec[data.mEndPointIdx])
-			endpointDividerVec[data.mEndPointIdx] = data.mMinPathRat;
-		if(!inMinConstraint && data.mHasEndMaxPathRat &&
-				data.mMaxPathRat > endpointDividerVec[data.mEndPointIdx])
-			endpointDividerVec[data.mEndPointIdx] = data.mMaxPathRat;
-	}
-
-
-	//then calculating criticality of each node
 	outNodeCritFactorsVec.clear();
 	outNodeCritFactorsVec.resize(inNodeTimingData.size(), 0);
 
-
+	//process timing data of all nodes to find slack intervals and RAT dividers of endpoints
+	//then calculating criticality of each node
 	for(size_t nIdx = 0; nIdx < inNodeTimingData.size(); nIdx++) {
 		if(!inNodeTimingData[nIdx].mHasTiming)
 			continue;
 
-		//NOTE: ignoring now unconstrained nodes and keeping their critical factor as 0
-		if(inNodeTimingData[nIdx].mEndPointIdx > inNodeTimingData.size())
+		//clocks and other control signals have max criticality
+		if(inNodeTimingData[nIdx].mNonData) {
+			outNodeCritFactorsVec[nIdx] = 1;
+			continue;
+		}
+
+		clkIdx = inNodeTimingData[nIdx].mClkIdx;
+		if(clkIdx < 0 ||
+				clkIdx >= inWorstRatPerClockVec.size() ||
+				clkIdx >= inWorstSlackPerClockVec.size())
 			continue;
 
-		//std::cout << "Calc crit factor of node #" << nIdx << std::endl;
+		nodeSlack = getNodeDataSlack(inNodeTimingData[nIdx], inMinConstraint);
+		worstRat = inWorstRatPerClockVec[clkIdx];
+		worstSlack = inWorstSlackPerClockVec[clkIdx];
 
-		//calculating critical factor of the node
-		outNodeCritFactorsVec[nIdx] = calcCritFactor(
-				inNodeTimingData[nIdx],
-				endpointMinSlackVec[inNodeTimingData[nIdx].mEndPointIdx],
-				endpointMaxSlackVec[inNodeTimingData[nIdx].mEndPointIdx],
-				endpointDividerVec[inNodeTimingData[nIdx].mEndPointIdx],
-				inMinConstraint);
+		if(worstSlack < 0)
+			worstSlack *= -1;
+
+		nodeSlack += worstSlack;
+		worstRat += worstSlack;
+
+		if(nodeSlack > worstRat)
+			worstRat = nodeSlack;
+
+		criticality = 1 - nodeSlack/worstRat;
+		if(criticality < 0)
+			criticality = 0;
+		if(criticality > 1)
+			criticality = 1;
+
+		outNodeCritFactorsVec[nIdx] = criticality;
 	}
+//
+//
+//	//then calculating criticality of each node
+//	outNodeCritFactorsVec.clear();
+//	outNodeCritFactorsVec.resize(inNodeTimingData.size(), 0);
+//
+//
+//	for(size_t nIdx = 0; nIdx < inNodeTimingData.size(); nIdx++) {
+//		if(!inNodeTimingData[nIdx].mHasTiming)
+//			continue;
+//
+//		//NOTE: ignoring now unconstrained nodes and keeping their critical factor as 0
+//		if(inNodeTimingData[nIdx].mEndPointIdx > inNodeTimingData.size())
+//			continue;
+//
+//		//std::cout << "Calc crit factor of node #" << nIdx << std::endl;
+//
+//		//calculating critical factor of the node
+//		outNodeCritFactorsVec[nIdx] = calcCritFactor(
+//				inNodeTimingData[nIdx],
+//				endpointMinSlackVec[inNodeTimingData[nIdx].mEndPointIdx],
+//				endpointMaxSlackVec[inNodeTimingData[nIdx].mEndPointIdx],
+//				endpointDividerVec[inNodeTimingData[nIdx].mEndPointIdx],
+//				inMinConstraint);
+//	}
 
 	return true;
 }
@@ -1392,6 +1460,12 @@ bool StaClientBase::getArcCritFactor(
 						bool inMinConstraint,
 						float& outCritFactor) {
 	if(!mHasGraph || !mHasGraphTiming)
+		return false;
+
+	auto sourceIt = mSourcePinToVertexIdUMap.find(inSourcePinPtr);
+	auto sinkIt = mSourcePinToVertexIdUMap.find(inSourcePinPtr);
+	if(sourceIt == mSourcePinToVertexIdUMap.end() ||
+			sinkIt == mSourcePinToVertexIdUMap.end())
 		return false;
 
 	auto edgeIt = mPinPairToEdgeIdUMap.find(
@@ -1509,6 +1583,19 @@ bool StaClientBase::setInterPinArcDelays(
 
 		if(edgePairIt.first == edgePairIt.second) {
 //			std::cout << "no edge '" << sourceName << "' -> '" << sinkName << "'" << std::endl;
+//
+//			auto sourceVertIt = mSourcePinToVertexIdUMap.find(arcData.mSourcePinPtr);
+//			if(sourceVertIt != mSourcePinToVertexIdUMap.end())
+//				std::cout << "\tsource_vertex: " << sourceVertIt->second << std::endl;
+//			else
+//				std::cout << "\tsource_vertex: undefined" << std::endl;
+//
+//			auto sinkVertIt = mSinkPinToVertexIdUMap.find(arcData.mSinkPinPtr);
+//			if(sinkVertIt != mSinkPinToVertexIdUMap.end())
+//				std::cout << "\tsink_vertex: " << sinkVertIt->second << std::endl;
+//			else
+//				std::cout << "\tsink_vertex: undefined" << std::endl;
+
 			//allOk = false;
 			continue;
 		}
@@ -1573,6 +1660,28 @@ bool StaClientBase::reportTiming(
 	command.mGroupsNum = inGroupsNum;
 
 	return mProtocol.execute(command, outReportStr);
+}
+
+/**
+ * Method to report basic timing stats of the design.
+ * @param inCommand command to execute
+ * @param outMinWNS worst slack for min condition
+ * @param outMinWNS worst slack for max condition
+ * @param outMinWNS total negative slack for min condition
+ * @param outMinWNS total negative slack for max condition
+ * @success status
+ */
+bool StaClientBase::getDesignStats(
+		float& outMinWNS,
+		float& outMaxWNS,
+		float& outMinTNS,
+		float& outMaxTNS) {
+	CommandGetDesignStats command;
+
+	return mProtocol.execute(
+			command,
+			outMinWNS, outMaxWNS,
+			outMinTNS, outMaxTNS);
 }
 
 
@@ -1740,24 +1849,22 @@ bool StaClientBase::fillPinToVertexIdMaps(
 			return false;
 		}
 
-//		std::string pinName;
-//		if(getParentInstance(pinPtr)) {
-//			pinName = getName(getParentInstance(pinPtr));
-//			pinName += "/";
-//		}
-//		pinName += getName(pinPtr);
+		std::string pinName;
+		if(getParentInstance(pinPtr)) {
+			pinName = getName(getParentInstance(pinPtr));
+			pinName += "/";
+		}
+		pinName += getName(pinPtr);
 
 		//writing out mapping
 		//mapping into vertex IDs from timing graph, not the vector indexes
 		if(inVertexIdToDataVec[dataIdx].mIsDriver) {
 //			std::cout << "source mapping vertex idx of pin '" << pinName
-//					<< "' -> " << inVertexIdToDataVec[dataIdx].mVertexId << std::endl;
-			//mDriverPinToVertexIdUMap.emplace(pinPtr, inVertexIdToDataVec[dataIdx].mVertexId);
+//					<< "' -> " << inVertexIdToDataVec[dataIdx].mVertexId  << std::endl;
 			mDriverPinToVertexIdUMap.emplace(pinPtr, dataIdx);
 		} else {
 //			std::cout << "sink mapping vertex idx of pin '" << pinName
 //					<< "' -> " << inVertexIdToDataVec[dataIdx].mVertexId << std::endl;
-			//mSinkPinToVertexIdUMap.emplace(pinPtr, inVertexIdToDataVec[dataIdx].mVertexId);
 			mSinkPinToVertexIdUMap.emplace(pinPtr, dataIdx);
 		}
 	}
@@ -1793,12 +1900,12 @@ bool StaClientBase::fillPinPairsToEdgeIdMap(
 		fromPinPtr = inVertexIdToPinVec[data.mFromVertexId];
 		toPinPtr = inVertexIdToPinVec[data.mToVertexId];
 
-//		std::string sourceName = getName(getParentInstance(fromPinPtr));
-//		sourceName += "/";
-//		sourceName += getName(fromPinPtr);
-//		std::string sinkName = getName(getParentInstance(toPinPtr));
-//		sinkName += "/";
-//		sinkName += getName(toPinPtr);
+		std::string sourceName = getName(getParentInstance(fromPinPtr));
+		sourceName += "/";
+		sourceName += getName(fromPinPtr);
+		std::string sinkName = getName(getParentInstance(toPinPtr));
+		sinkName += "/";
+		sinkName += getName(toPinPtr);
 
 		if(!fromPinPtr || !toPinPtr) {
 //			std::cout << "failed to find pins for edge " << data.mEdgeId <<
@@ -1810,9 +1917,10 @@ bool StaClientBase::fillPinPairsToEdgeIdMap(
 //		std::cout << "registering edge " << data.mEdgeId <<
 //				": '" << sourceName << "' -> '" << sinkName << "'" << std::endl;
 
-		outPinPairToEdgeIdUMap.emplace(
-				std::make_pair(fromPinPtr, toPinPtr),
-				data.mEdgeId);
+		outPinPairToEdgeIdUMap.insert(
+				std::make_pair(
+					std::make_pair(fromPinPtr, toPinPtr),
+					data.mEdgeId));
 	}
 
 	return true;

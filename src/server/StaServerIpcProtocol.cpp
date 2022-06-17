@@ -164,6 +164,9 @@ bool StaServerIpcProtocol::runCycle() {
 			case EMessageType::EMessageTypeReportTiming:
 				handleReportTiming();
 				break;
+			case EMessageType::EMessageTypeGetDesignStats:
+				handleGetDesignStats();
+				break;
 
 			default:
 				handledCommand = false;
@@ -227,6 +230,49 @@ bool StaServerIpcProtocol::handleReportTiming() {
 
 	return mChannelPtr->send(response) == EMessageStatus::eMessageStatusOk;
 }
+
+/**
+ * Handles command to get design statistics.
+ * Operates like \link handleMessageWithStatus, but also sends out report string.
+ * @return success status
+ */
+bool StaServerIpcProtocol::handleGetDesignStats() {
+
+	CommandGetDesignStats command;
+	EMessageStatus status = EMessageStatus::eMessageStatusOk;
+
+	bool ok = true;
+	if(mChannelPtr->popMessage(command) !=
+			EMessageStatus::eMessageStatusOk) {
+		status = EMessageStatus::eMessageStatusFailed;
+		ok = false;
+	}
+
+	std::string reportStr;
+	float minWNS = 0;
+	float maxWNS = 0;
+	float minTNS = 0;
+	float maxTNS = 0;
+
+	if(ok && !mStaHandlerPtr->execute(command,
+			minWNS, maxWNS, minTNS, maxTNS)) {
+		status = EMessageStatus::eMessageStatusFailed;
+		ok = false;
+	}
+
+	ResponseDesignStats response;
+	response.mMinTNS = minTNS;
+	response.mMaxTNS = maxTNS;
+	response.mMinWslack = minWNS;
+	response.mMaxWslack = maxWNS;
+
+	response.mExecStatus = status;
+	if(status == EMessageStatus::eMessageStatusOk)
+		response.mStr = reportStr;
+
+	return mChannelPtr->send(response) == EMessageStatus::eMessageStatusOk;
+}
+
 
 /**
  * Handles command to return mapping of objects in the timing graph.

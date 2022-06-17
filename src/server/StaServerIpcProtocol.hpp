@@ -44,6 +44,8 @@ protected:
 
 	bool handleReportTiming();
 
+	bool handleGetDesignStats();
+
 	bool handleGetGraphData();
 
 	bool handleGetGraphSlacksData();

@@ -681,6 +681,21 @@ public:
 			uint32_t inGroupsNum,
 			std::string& outReportStr) = 0;
 
+	/**
+	 * Method to report basic timing stats of the design.
+	 * @param inCommand command to execute
+	 * @param outMinWNS worst slack for min condition
+	 * @param outMinWNS worst slack for max condition
+	 * @param outMinWNS total negative slack for min condition
+	 * @param outMinWNS total negative slack for max condition
+	 * @success status
+	 */
+	virtual bool getDesignStats(
+			float& outMinWNS,
+			float& outMaxWNS,
+			float& outMinTNS,
+			float& outMaxTNS) = 0;
+
 };
 
 

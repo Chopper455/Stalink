@@ -254,6 +254,13 @@ void serialize(
 		inObj.mGroupsNum;
 }
 
+template<typename _ArchiveType>
+void serialize(
+		_ArchiveType& outArch,
+		stamask::CommandGetDesignStats &inObj) {
+	outArch & inObj.mStr;
+}
+
 
 template<typename _ArchiveType>
 void serialize(
@@ -563,10 +570,12 @@ void serialize(
 		_ArchiveType& outArch,
 		stamask::NodeTimingData &inObj) {
 	outArch &
+		inObj.mClkIdx &
 		inObj.mEndPointIdx &
 		inObj.mHasEndMaxPathRat &
 		inObj.mHasEndMinPathRat &
 		inObj.mHasTiming &
+		inObj.mNonData &
 		inObj.mIsEndPoint &
 		inObj.mMaxPathRat &
 		inObj.mMinPathRat &
@@ -584,6 +593,19 @@ void serialize(
 	outArch & inObj.mExecStatus &
 		inObj.mStr &
 		inObj.mNodeTimingsVec;
+}
+
+template<typename _ArchiveType>
+void serialize(
+		_ArchiveType& outArch,
+		stamask::ResponseDesignStats &inObj) {
+	outArch &
+		inObj.mExecStatus &
+		inObj.mStr &
+		inObj.mMaxTNS &
+		inObj.mMaxWslack &
+		inObj.mMinTNS &
+		inObj.mMinWslack;
 }
 
 
@@ -741,6 +763,9 @@ DataBlock YasMessageSerdes::serializeMessage(
 	case EMessageType::EMessageTypeReportTiming:
 		return serialize((const CommandReportTiming&)inMessage);
 
+	case EMessageType::EMessageTypeGetDesignStats:
+		return serialize((CommandGetDesignStats&)inMessage);
+
 	case EMessageType::EMessageTypeExecutionStatus:
 		return serialize((const ResponseCommExecStatus&)inMessage);
 
@@ -749,6 +774,9 @@ DataBlock YasMessageSerdes::serializeMessage(
 
 	case EMessageType::EMessageTypeGraphSlacks:
 		return serialize((const ResponseGraphSlacks&)inMessage);
+
+	case EMessageType::EMessageTypeDesignStats:
+		return serialize((const ResponseDesignStats&)inMessage);
 
 	}
 
@@ -882,6 +910,9 @@ bool YasMessageSerdes::deserializeMessage(
 	case EMessageType::EMessageTypeReportTiming:
 		return deserialize((CommandReportTiming&)outMessage, inData);
 
+	case EMessageType::EMessageTypeGetDesignStats:
+		return deserialize((CommandGetDesignStats&)outMessage, inData);
+
 	case EMessageType::EMessageTypeExecutionStatus:
 		return deserialize((ResponseCommExecStatus&)outMessage, inData);
 
@@ -890,6 +921,9 @@ bool YasMessageSerdes::deserializeMessage(
 
 	case EMessageType::EMessageTypeGraphSlacks:
 		return deserialize((ResponseGraphSlacks&)outMessage, inData);
+
+	case EMessageType::EMessageTypeDesignStats:
+		return deserialize((ResponseDesignStats&)outMessage, inData);
 	}
 
 	return false;

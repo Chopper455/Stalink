@@ -354,6 +354,42 @@ bool StaClientIpcProtocol::execute(
 }
 
 /**
+ * Sends command to get main timing stats.
+ * Returns false if channel or callback is nullptr.
+ * Returns false if response isn't OK.
+ * @param inCommand command send
+ * @param outMinWNS worst slack for min condition
+ * @param outMinWNS worst slack for max condition
+ * @param outMinWNS total negative slack for min condition
+ * @param outMinWNS total negative slack for max condition
+ * @return execution status
+ */
+bool StaClientIpcProtocol::execute(
+		const CommandGetDesignStats& inCommand,
+		float& outMinWNS,
+		float& outMaxWNS,
+		float& outMinTNS,
+		float& outMaxTNS) {
+	if(!mChannelPtr || !mCallbackPtr)
+		return false;
+
+	ResponseDesignStats status;
+	if(!sendReceiveCommand(inCommand, status))
+		return false;
+
+	if(!processResponseStatus(status, mCallbackPtr))
+		return false;
+
+	outMinWNS = status.mMinWslack;
+	outMaxWNS = status.mMaxWslack;
+	outMinTNS = status.mMinTNS;
+	outMaxTNS = status.mMaxTNS;
+
+	return true;
+}
+
+
+/**
  * Sends command to create clock.
  * See \link executeWithSimpleResponse
  */

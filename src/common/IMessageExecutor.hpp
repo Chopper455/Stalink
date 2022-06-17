@@ -98,6 +98,12 @@ public:
 	virtual bool execute(
 			const CommandReportTiming& inCommand,
 			std::string& outReportStr) = 0;
+	virtual bool execute(
+			const CommandGetDesignStats& inCommand,
+			float& outMinWNS,
+			float& outMaxWNS,
+			float& outMinTNS,
+			float& outMaxTNS) = 0;
 
 };
 

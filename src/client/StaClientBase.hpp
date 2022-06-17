@@ -26,9 +26,14 @@ class StaClientBase:
 
 	typedef std::pair<const GenericPin*, const GenericPin*>
 			PinsPair;
+	typedef std::pair<uint32_t, uint32_t>
+			PinIdPair;
 	typedef std::unordered_multimap<
 				PinsPair, uint32_t, boost::hash<PinsPair>>
 			PinsPairToEdgeIdUMMap;
+	typedef std::unordered_multimap<
+				PinIdPair, uint32_t, boost::hash<PinIdPair>>
+			PinIdPairToEdgeIdUMMap;
 	typedef std::map<std::string, GenericPin*>
 			StrToPinMap;
 
@@ -76,7 +81,7 @@ public:
 
 	virtual ~StaClientBase();
 
-	void setChannel(IpcChannel* inChannelPtr);
+	virtual void setChannel(IpcChannel* inChannelPtr);
 
 	IpcChannel* getChannel();
 
@@ -386,6 +391,12 @@ public:
 			uint32_t inGroupsNum,
 			std::string& outReportStr);
 
+	virtual bool getDesignStats(
+			float& outMinWNS,
+			float& outMaxWNS,
+			float& outMinTNS,
+			float& outMaxTNS);
+
 protected:
 
 	void clearGraphMapping();
@@ -424,9 +435,19 @@ private:
 
 private:
 
+
+	virtual bool collectClockShifts(
+			const std::vector<NodeTimingData>& inNodeTimingData,
+			std::vector<float>& outClockMinWorstRatVec,
+			std::vector<float>& outClockMaxWorstRatVec,
+			std::vector<float>& outClockMinWorstSlackVec,
+			std::vector<float>& outClockMaxWorstSlackVec);
+
 	virtual bool calcNodeCritFactors(
 			const std::vector<NodeTimingData>& inNodeTimingData,
 			std::vector<float>& outNodeCritFactorsVec,
+			const std::vector<float>& inWorstRatPerClockVec,
+			const std::vector<float>& inWorstSlackPerClockVec,
 			bool inMinConstraint);
 
 	virtual float calcCritFactor(

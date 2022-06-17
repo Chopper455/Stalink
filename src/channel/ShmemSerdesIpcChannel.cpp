@@ -98,7 +98,9 @@ bool ShmemSerdesIpcChannel::connect() {
 		}
 		connected = true;
 	}
-	catch (const std::exception &ex) {}
+	catch (const std::exception &ex) {
+		std::cout << "Exception: " << ex.what() << std::endl;
+	}
 
 	if(!connected)
 		return false;
@@ -116,7 +118,16 @@ bool ShmemSerdesIpcChannel::connect() {
 	mShdMemBlockRegion = bi::mapped_region{mShdMemBlock, bi::read_write};
 	mShdMemBlockPtr = static_cast<uint8_t*>(mShdMemBlockRegion.get_address());
 
-	mLock = bi::scoped_lock<bi::interprocess_mutex>(mShdCtrlPtr->mMutex);
+	const boost::system_time timeout =
+			boost::posix_time::microsec_clock::universal_time() +
+			boost::posix_time::milliseconds(1000);
+
+	mLock = bi::scoped_lock<bi::interprocess_mutex>(mShdCtrlPtr->mMutex, timeout);
+	if(!mLock.owns()) {
+		disconnect();
+		throw std::runtime_error("connection channel was abandoned");
+	}
+
 	mLock.unlock();
 	mConnected = true;
 

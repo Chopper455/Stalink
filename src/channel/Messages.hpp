@@ -68,7 +68,7 @@ enum EMessageType : uint16_t {
 	EMessageTypeSetGlobalTimingDerate,
 
 	EMessageTypeReportTiming,
-
+	EMessageTypeGetDesignStats,
 
 	//------------------------
 	//RESPONSES HERE
@@ -77,6 +77,7 @@ enum EMessageType : uint16_t {
 	EMessageTypeExecutionStatus,
 	EMessageTypeGraphMap,
 	EMessageTypeGraphSlacks,
+	EMessageTypeDesignStats,
 };
 
 
@@ -776,6 +777,17 @@ public:
 };
 
 
+/**
+ * Command to report main design statistics.
+ */
+class CommandGetDesignStats : public StringMessage {
+public:
+	virtual EMessageType getMesgType() const {
+		return EMessageType::EMessageTypeGetDesignStats;
+	}
+};
+
+
 //---------------------------------------------------------------
 //responses to commands execution
 
@@ -845,6 +857,9 @@ struct NodeTimingData {
 	//flag to mark nodes that have no constraints
 	bool mHasTiming = false;
 
+	/** flag that path belongs to non-data paths */
+	bool mNonData = false;
+
 	//for min-max slacks of both setup and hold analysis, rise/fall doesn't matter
 	float mMinWorstSlackRat = -1e30;
 	float mMinWorstSlackAat = 1e30;
@@ -860,6 +875,8 @@ struct NodeTimingData {
 
 	//need this to convert slacks into critical factors based on RATs of their own endpoints
 	uint32_t mEndPointIdx = -1;
+
+	int mClkIdx = 0;
 };
 
 
@@ -876,7 +893,20 @@ public:
 	}
 };
 
-
+/**
+ * Response with main design statistics.
+ */
+class ResponseDesignStats : public ResponseCommExecStatus {
+public:
+	float mMinWslack = 0;
+	float mMaxWslack = 0;
+	float mMinTNS = 0;
+	float mMaxTNS = 0;
+public:
+	virtual EMessageType getMesgType() const {
+		return EMessageType::EMessageTypeDesignStats;
+	}
+};
 
 
 
