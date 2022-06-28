@@ -4,6 +4,9 @@
 
 #include "SerdesIpcChannelBase.hpp"
 
+#define BOOST_INTERPROCESS_ENABLE_TIMEOUT_WHEN_LOCKING
+#define BOOST_INTERPROCESS_TIMEOUT_WHEN_LOCKING_DURATION_MS 500
+
 #include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/sync/named_mutex.hpp>

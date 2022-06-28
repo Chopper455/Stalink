@@ -99,7 +99,8 @@ bool ShmemSerdesIpcChannel::connect() {
 		connected = true;
 	}
 	catch (const std::exception &ex) {
-		std::cout << "Exception: " << ex.what() << std::endl;
+		//std::cout << "Exception: " << ex.what() << std::endl;
+		return false;
 	}
 
 	if(!connected)
