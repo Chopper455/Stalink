@@ -652,6 +652,9 @@ public:
 	std::vector<ObjectContextNameData> mToPinPathsVec;
 	std::vector<std::string> mToClocksVec;
 	std::vector<ObjectContextNameData> mToInstPathsVec;
+
+	bool mRise;
+	bool mFall;
 };
 
 

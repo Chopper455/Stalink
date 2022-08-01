@@ -418,6 +418,8 @@ public:
 	 * @param inToPinPathsVec end point pin paths
 	 * @param inToClocksVec  end point clock names
 	 * @param inToInstPathsVec middle point inst paths
+	 * @param inRise end point rise transition
+	 * @param inFall end point fall transition
 	 * @return operation success
 	 */
 	virtual bool setFalsePath(
@@ -438,7 +440,9 @@ public:
 		bool inToFall,
 		const std::vector<PinContextPath>& inToPinPathsVec,
 		const std::vector<std::string>& inToClocksVec,
-		const std::vector<InstContextPath>& inToInstPathsVec) = 0;
+		const std::vector<InstContextPath>& inToInstPathsVec,
+		bool inRise,
+		bool inFall) = 0;
 
 
 
@@ -462,6 +466,8 @@ public:
 	 * @param inToPinPathsVec end point pin paths
 	 * @param inToClocksVec  end point clock names
 	 * @param inToInstPathsVec middle point inst paths
+	 * @param inRise end point rise transition
+	 * @param inFall end point fall transition
 	 * @return operation success
 	 */
 	virtual bool setMinMaxDelay(
@@ -482,7 +488,9 @@ public:
 			bool inToFall,
 			const std::vector<PinContextPath>& inToPinPathsVec,
 			const std::vector<std::string>& inToClocksVec,
-			const std::vector<InstContextPath>& inToInstPathsVec) = 0;
+			const std::vector<InstContextPath>& inToInstPathsVec,
+			bool inRise,
+			bool inFall) = 0;
 
 	/**
 	 * Sets multicycle clock constraint for specified paths.
@@ -507,6 +515,8 @@ public:
 	 * @param inToPinPathsVec end point pin paths
 	 * @param inToClocksVec  end point clock names
 	 * @param inToInstPathsVec middle point inst paths
+	 * @param inRise end point rise transition
+	 * @param inFall end point fall transition
 	 * @return operation success
 	 */
 	virtual bool setMulticyclePath(
@@ -530,7 +540,9 @@ public:
 			bool inToFall,
 			const std::vector<PinContextPath>& inToPinPathsVec,
 			const std::vector<std::string>& inToClocksVec,
-			const std::vector<InstContextPath>& inToInstPathsVec) = 0;
+			const std::vector<InstContextPath>& inToInstPathsVec,
+			bool inRise,
+			bool inFall) = 0;
 
 
 	/**

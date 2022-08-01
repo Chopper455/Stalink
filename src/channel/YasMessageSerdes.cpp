@@ -427,6 +427,8 @@ void serialize(
 		inObj.mToPinPathsVec &
 		inObj.mToClocksVec &
 		inObj.mToInstPathsVec &
+		inObj.mRise &
+		inObj.mFall &
 		inObj.mSetup &
 		inObj.mHold &
 		inObj.mComment;
@@ -453,6 +455,8 @@ void serialize(
 		inObj.mToPinPathsVec &
 		inObj.mToClocksVec &
 		inObj.mToInstPathsVec &
+		inObj.mRise &
+		inObj.mFall &
 		inObj.mMinDelayFlag &
 		inObj.mValue &
 		inObj.mComment;
@@ -479,6 +483,8 @@ void serialize(
 		inObj.mToPinPathsVec &
 		inObj.mToClocksVec &
 		inObj.mToInstPathsVec &
+		inObj.mRise &
+		inObj.mFall &
 		inObj.mSetup &
 		inObj.mHold &
 		inObj.mStart &

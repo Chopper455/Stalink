@@ -49,10 +49,14 @@ EMessageStatus SerdesIpcChannelBase::send(
 	if(!mSerdesPtr)
 		return EMessageStatus::eMessageStatusFailed;
 
-	if(!sendDataBlock(
-			inMessage.getMesgType(),
-			mSerdesPtr->serializeMessage(inMessage)))
+	try {
+		if(!sendDataBlock(
+				inMessage.getMesgType(),
+				mSerdesPtr->serializeMessage(inMessage)))
+			return EMessageStatus::eMessageStatusFailed;
+	} catch(...) {
 		return EMessageStatus::eMessageStatusFailed;
+	}
 
 	return EMessageStatus::eMessageStatusOk;
 }

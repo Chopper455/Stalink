@@ -268,7 +268,9 @@ public:
 			bool inToFall,
 			const std::vector<PinContextPath>& inToPinPathsVec,
 			const std::vector<std::string>& inToClocksVec,
-			const std::vector<InstContextPath>& inToInstPathsVec);
+			const std::vector<InstContextPath>& inToInstPathsVec,
+			bool inRise,
+			bool inFall);
 
 	virtual bool setMinMaxDelay(
 			bool inMinDelayFlag,
@@ -288,7 +290,9 @@ public:
 			bool inToFall,
 			const std::vector<PinContextPath>& inToPinPathsVec,
 			const std::vector<std::string>& inToClocksVec,
-			const std::vector<InstContextPath>& inToInstPathsVec);
+			const std::vector<InstContextPath>& inToInstPathsVec,
+			bool inRise,
+			bool inFall);
 
 	virtual bool setMulticyclePath(
 			bool inSetup,
@@ -311,7 +315,9 @@ public:
 			bool inToFall,
 			const std::vector<PinContextPath>& inToPinPathsVec,
 			const std::vector<std::string>& inToClocksVec,
-			const std::vector<InstContextPath>& inToInstPathsVec);
+			const std::vector<InstContextPath>& inToInstPathsVec,
+			bool inRise,
+			bool inFall);
 
 	virtual bool setDisablePinTiming(
 			const PinContextPath& inPinPath);
@@ -498,6 +504,8 @@ private:
 			const std::vector<PinContextPath>& inToPinPathsVec,
 			const std::vector<std::string>& inToClocksVec,
 			const std::vector<InstContextPath>& inToInstPathsVec,
+			bool inRise,
+			bool inFall,
 			TimingPathMessageBase& outMessage);
 
 protected:

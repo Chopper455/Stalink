@@ -816,6 +816,8 @@ bool StaClientBase::setInputTransition(
  * @param inToPinPathsVec end point pin paths
  * @param inToClocksVec  end point clock names
  * @param inToInstPathsVec middle point inst paths
+ * @param inRise end point rise transition
+ * @param inFall end point fall transition
  * @return operation success
  */
 bool StaClientBase::setFalsePath(
@@ -836,7 +838,9 @@ bool StaClientBase::setFalsePath(
 						bool inToFall,
 						const std::vector<PinContextPath>& inToPinPathsVec,
 						const std::vector<std::string>& inToClocksVec,
-						const std::vector<InstContextPath>& inToInstPathsVec) {
+						const std::vector<InstContextPath>& inToInstPathsVec,
+						bool inRise,
+						bool inFall) {
 	CommandSetFalsePath command;
 	command.mSetup = inSetup;
 	command.mHold = inHold;
@@ -845,7 +849,7 @@ bool StaClientBase::setFalsePath(
 	fillPathMesgData(
 			inFromRise, inFromFall, inFromPinPathsVec, inFromClocksVec, inFromInstPathsVec,
 			inThroughRise, inThroughFall, inThroughPinPathsVec, inThroughInstPathsVec, inThroughNetPathsVec,
-			inToRise, inToFall, inToPinPathsVec, inToClocksVec, inToInstPathsVec,
+			inToRise, inToFall, inToPinPathsVec, inToClocksVec, inToInstPathsVec, inRise, inFall,
 			command);
 
 	return mProtocol.execute(command);
@@ -871,6 +875,8 @@ bool StaClientBase::setFalsePath(
  * @param inToPinPathsVec end point pin paths
  * @param inToClocksVec  end point clock names
  * @param inToInstPathsVec middle point inst paths
+ * @param inRise end point rise transition
+ * @param inFall end point fall transition
  * @return operation success
  */
 bool StaClientBase::setMinMaxDelay(
@@ -891,7 +897,9 @@ bool StaClientBase::setMinMaxDelay(
 							bool inToFall,
 							const std::vector<PinContextPath>& inToPinPathsVec,
 							const std::vector<std::string>& inToClocksVec,
-							const std::vector<InstContextPath>& inToInstPathsVec) {
+							const std::vector<InstContextPath>& inToInstPathsVec,
+							bool inRise,
+							bool inFall) {
 	CommandSetMinMaxDelay command;
 	command.mMinDelayFlag = inMinDelayFlag;
 	command.mValue = inValue;
@@ -900,7 +908,7 @@ bool StaClientBase::setMinMaxDelay(
 	fillPathMesgData(
 			inFromRise, inFromFall, inFromPinPathsVec, inFromClocksVec, inFromInstPathsVec,
 			inThroughRise, inThroughFall, inThroughPinPathsVec, inThroughInstPathsVec, inThroughNetPathsVec,
-			inToRise, inToFall, inToPinPathsVec, inToClocksVec, inToInstPathsVec,
+			inToRise, inToFall, inToPinPathsVec, inToClocksVec, inToInstPathsVec, inRise, inFall,
 			command);
 
 	return mProtocol.execute(command);
@@ -929,6 +937,8 @@ bool StaClientBase::setMinMaxDelay(
  * @param inToPinPathsVec end point pin paths
  * @param inToClocksVec  end point clock names
  * @param inToInstPathsVec middle point inst paths
+ * @param inRise end point rise transition
+ * @param inFall end point fall transition
  * @return operation success
  */
 bool StaClientBase::setMulticyclePath(
@@ -952,7 +962,9 @@ bool StaClientBase::setMulticyclePath(
 						bool inToFall,
 						const std::vector<PinContextPath>& inToPinPathsVec,
 						const std::vector<std::string>& inToClocksVec,
-						const std::vector<InstContextPath>& inToInstPathsVec) {
+						const std::vector<InstContextPath>& inToInstPathsVec,
+						bool inRise,
+						bool inFall) {
 	CommandSetMulticyclePath command;
 	command.mSetup = inSetup;
 	command.mHold = inHold;
@@ -964,7 +976,7 @@ bool StaClientBase::setMulticyclePath(
 	fillPathMesgData(
 			inFromRise, inFromFall, inFromPinPathsVec, inFromClocksVec, inFromInstPathsVec,
 			inThroughRise, inThroughFall, inThroughPinPathsVec, inThroughInstPathsVec, inThroughNetPathsVec,
-			inToRise, inToFall, inToPinPathsVec, inToClocksVec, inToInstPathsVec,
+			inToRise, inToFall, inToPinPathsVec, inToClocksVec, inToInstPathsVec, inRise, inFall,
 			command);
 
 	return mProtocol.execute(command);
@@ -998,9 +1010,6 @@ bool StaClientBase::setDisableInstTiming(
 						const std::vector<const GenericInst*>& mInstContextVec,
 						const GenericPin* inFromPinPtr,
 						const GenericPin* inToPinPtr) {
-	if(!inFromPinPtr || !inToPinPtr)
-		return false;
-
 	CommandDisableInstTiming command;
 	for(const GenericInst* instPtr : mInstContextVec)
 		command.mInstContextVec.push_back(getName(instPtr));
@@ -2013,6 +2022,8 @@ bool StaClientBase::fillPathMesgData(
 						const std::vector<PinContextPath>& inToPinPathsVec,
 						const std::vector<std::string>& inToClocksVec,
 						const std::vector<InstContextPath>& inToInstPathsVec,
+						bool inRise,
+						bool inFall,
 						TimingPathMessageBase& outMessage) {
 	outMessage.mFromRise = inFromRise;
 	outMessage.mFromFall = inFromFall;
@@ -2031,6 +2042,9 @@ bool StaClientBase::fillPathMesgData(
 	convertContextNameDataVec(inToPinPathsVec, outMessage.mToPinPathsVec);
 	outMessage.mToClocksVec = inToClocksVec;
 	convertContextNameDataVec(inToInstPathsVec, outMessage.mToInstPathsVec);
+
+	outMessage.mRise = inRise;
+	outMessage.mFall = inFall;
 
 	return true;
 }
