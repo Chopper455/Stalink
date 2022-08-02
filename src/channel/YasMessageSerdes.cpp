@@ -406,6 +406,18 @@ void serialize(
 		inObj.mTargetPortPin;
 }
 
+template<typename _ArchiveType>
+void serialize(
+		_ArchiveType& outArch,
+		stamask::CommandSetPortPinLoad &inObj) {
+	outArch &
+		inObj.mRise &
+		inObj.mFall &
+		inObj.mMax &
+		inObj.mMin &
+		inObj.mCap &
+		inObj.mTargetPortPin;
+}
 
 template<typename _ArchiveType>
 void serialize(
@@ -748,6 +760,9 @@ DataBlock YasMessageSerdes::serializeMessage(
 	case EMessageType::EMessageTypeSetInPortTransition:
 		return serialize((const CommandSetInPortTransition&)inMessage);
 
+	case EMessageType::EMessageTypeSetPortPinLoad:
+		return serialize((const CommandSetPortPinLoad&)inMessage);
+
 	case EMessageType::EMessageTypeSetFalsePath:
 		return serialize((const CommandSetFalsePath&)inMessage);
 
@@ -894,6 +909,9 @@ bool YasMessageSerdes::deserializeMessage(
 
 	case EMessageType::EMessageTypeSetInPortTransition:
 		return deserialize((CommandSetInPortTransition&)outMessage, inData);
+
+	case EMessageType::EMessageTypeSetPortPinLoad:
+		return deserialize((CommandSetPortPinLoad&)outMessage, inData);
 
 	case EMessageType::EMessageTypeSetFalsePath:
 		return deserialize((CommandSetFalsePath&)outMessage, inData);

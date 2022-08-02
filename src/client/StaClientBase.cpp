@@ -795,6 +795,40 @@ bool StaClientBase::setInputTransition(
 	return mProtocol.execute(command);
 }
 
+/**
+ * Sets pin load capacitance for port.
+ * Returns false if target pin pointer is null.
+ * Transition time is in seconds.
+ * @param inRise apply load for rising edges
+ * @param inFall apply load  for falling edges
+ * @param inMax load for max delay
+ * @param inMin load for max delay
+ * @param inCap capacitance value
+ * @param inTargetPortPin target port
+ * @return operations success
+ */
+bool StaClientBase::setPortPinLoad(
+						bool inRise,
+						bool inFall,
+						bool inMax,
+						bool inMin,
+						float inCap,
+						const PinContextPath& inTargetPortPin) {
+	if(!inTargetPortPin.mObjectPtr)
+		return false;
+
+	CommandSetPortPinLoad command;
+	command.mRise = inRise;
+	command.mFall = inFall;
+	command.mMax = inMax;
+	command.mMin = inMin;
+	command.mCap = inCap;
+
+	convertContextObjPath(
+			inTargetPortPin, command.mTargetPortPin);
+
+	return mProtocol.execute(command);
+}
 
 /**
  * Adds paths to exclude from timing analysis.

@@ -80,6 +80,8 @@ public:
 	virtual bool execute(
 			const CommandSetSinglePinUncertainty& inCommand) = 0;
 	virtual bool execute(
+			const CommandSetPortPinLoad& inCommand) = 0;
+	virtual bool execute(
 			const CommandSetPortDelay& inCommand) = 0;
 	virtual bool execute(
 			const CommandSetInPortTransition& inCommand) = 0;

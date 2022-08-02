@@ -397,6 +397,25 @@ public:
 			float inDelay,
 			const PinContextPath& inTargetPortPin) = 0;
 
+	/**
+	 * Sets load pin capacitance for port.
+	 * Returns false if target pin pointer is null.
+	 * Transition time is in seconds.
+	 * @param inRise apply load for rising edges
+	 * @param inFall apply load  for falling edges
+	 * @param inMax load for max delay
+	 * @param inMin load for max delay
+	 * @param inCap capacitance value
+	 * @param inTargetPortPin target port
+	 * @return operations success
+	 */
+	virtual bool setPortPinLoad(
+			bool inRise,
+			bool inFall,
+			bool inMax,
+			bool inMin,
+			float inCap,
+			const PinContextPath& inTargetPortPin) = 0;
 
 	/**
 	 * Adds paths to exclude from timing analysis.

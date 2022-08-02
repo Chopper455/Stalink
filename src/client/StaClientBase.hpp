@@ -250,6 +250,14 @@ public:
 			float inDelay,
 			const PinContextPath& inTargetPortPin);
 
+	virtual bool setPortPinLoad(
+			bool inRise,
+			bool inFall,
+			bool inMax,
+			bool inMin,
+			float inCap,
+			const PinContextPath& inTargetPortPin);
+
 	virtual bool setFalsePath(
 			bool inSetup,
 			bool inHold,

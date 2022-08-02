@@ -142,6 +142,9 @@ bool StaServerIpcProtocol::runCycle() {
 			case EMessageType::EMessageTypeSetInPortTransition:
 				handleMessageWithStatus<CommandSetInPortTransition>();
 				break;
+			case EMessageType::EMessageTypeSetPortPinLoad:
+				handleMessageWithStatus<CommandSetPortPinLoad>();
+				break;
 			case EMessageType::EMessageTypeSetFalsePath:
 				handleMessageWithStatus<CommandSetFalsePath>();
 				break;

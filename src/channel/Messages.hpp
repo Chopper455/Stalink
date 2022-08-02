@@ -60,6 +60,7 @@ enum EMessageType : uint16_t {
 	EMessageTypeSetSinglePinUncertainty,
 	EMessageTypeSetSinglePortDelay,
 	EMessageTypeSetInPortTransition,
+	EMessageTypeSetPortPinLoad,
 	EMessageTypeSetFalsePath,
 	EMessageTypeSetMinMaxDelay,
 	EMessageTypeSetMulticyclePath,
@@ -626,6 +627,25 @@ public:
 public:
 	virtual EMessageType getMesgType() const {
 		return EMessageType::EMessageTypeSetInPortTransition;
+	}
+};
+
+
+/**
+ * Command to set pin load of single port.
+ */
+class CommandSetPortPinLoad : public Message {
+public:
+	bool mRise;
+	bool mFall;
+	bool mMax;
+	bool mMin;
+	float mCap;
+	ObjectContextNameData mTargetPortPin;
+
+public:
+	virtual EMessageType getMesgType() const {
+		return EMessageType::EMessageTypeSetPortPinLoad;
 	}
 };
 

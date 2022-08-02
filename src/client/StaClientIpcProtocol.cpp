@@ -480,6 +480,16 @@ bool StaClientIpcProtocol::execute(
 }
 
 /**
+ * Sends command to set port load.
+ * See \link executeWithSimpleResponse
+ */
+bool StaClientIpcProtocol::execute(
+		const CommandSetPortPinLoad& inCommand) {
+	return executeWithSimpleResponse<CommandSetPortPinLoad>(
+			inCommand, mCallbackPtr);
+}
+
+/**
  * Sends command to set false paths.
  * See \link executeWithSimpleResponse
  */
